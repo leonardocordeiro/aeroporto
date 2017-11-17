@@ -167,7 +167,7 @@ LandingStrip** createLandingStrips(int quantity) {
 void createAirplanesOn(Queue** queue, int quantity, int landing, int queueQuantity) {
     
     int queueIndex = checkBetterQueue(queue, queueQuantity);
-    printf("%i novos aviões na fila %i \n\n", quantity, queueIndex);
+    printf("\n%i novo(s) aviões na fila %i\n\n", quantity, queueIndex);
     
     for(int i = 0; i < quantity; i++) {
         Airplane* airplane = newAirplane(randomNumber(1, 20));
@@ -178,7 +178,7 @@ void createAirplanesOn(Queue** queue, int quantity, int landing, int queueQuanti
         if(!landing && (airplane->id % 2 == 0))
             airplane->id++;
         
-        
+        printf("[id: %i, combustível: %i] \n\n", airplane->id, airplane->fuel);
         add(airplane, queue[queueIndex]);
         
     }
@@ -349,7 +349,7 @@ int calculateTimeToWaitForLanding(Queue** queues, int queuesQuantity, Airplane* 
 void showAllLandingStrip(LandingStrip** landingStrip, int landingStripQuantity) {
     
     for(int i = 0; i < landingStripQuantity; i++) {
-        printf("\nPista %i \n", (i + 1));
+        printf("\nPista %i: ", (i + 1));
         if(landingStrip[i]->airplane != NULL) {
             printf("[id: %i, combustivel: %i] \n", landingStrip[i]->airplane->id, landingStrip[i]->airplane->fuel);
         }
@@ -362,18 +362,6 @@ int main() {
     
     LandingStrip** landingStrips = createLandingStrips(2);
     
-//    Airplane* airplane1 = newAirplane(10);
-//    Airplane* airplane2 = newAirplane(20);
-//
-//    add(airplane1, landingQueue[0]);
-//    add(airplane2, landingQueue[0]);
-//
-//    popFrom(landingQueue[0], airplane1);
-//    popFrom(landingQueue[0], airplane2);
-//
-//    showAll(landingQueue, 1);
-    
-    
     for(int time = 0;; time++) {
         waitCommand();
 
@@ -383,8 +371,10 @@ int main() {
         createAirplanesOn(landingQueue, airplaneLandingNumber, 1, 4);
 
         takeOffLessFuelAirplaneOn(landingQueue, 4, landingStrips, 2);
+        
+        
+        
         showAll(landingQueue, 4);
-
         showAllLandingStrip(landingStrips, 2);
 
     }
