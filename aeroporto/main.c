@@ -436,7 +436,13 @@ void showAllLandingStrip(LandingStrip** landingStrip, int landingStripQuantity) 
     for(int i = 0; i < landingStripQuantity; i++) {
         printf("\nPista %i: ", (i + 1));
         if(landingStrip[i]->airplane != NULL) {
-            printf("[id: %i, combustivel: %i] \n", landingStrip[i]->airplane->id, landingStrip[i]->airplane->fuel);
+            
+            if(landingStrip[i]->airplane->fuel < 20) {
+                printf("[id: %i, combustivel: %i, status: Pouso] \n", landingStrip[i]->airplane->id, landingStrip[i]->airplane->fuel);
+            } else {
+                printf("[id: %i, combustivel: %i, status: Decolagem] \n", landingStrip[i]->airplane->id, landingStrip[i]->airplane->fuel);
+            }
+        
         }
     }
 }
@@ -459,10 +465,10 @@ int main() {
         takeOffAirplanes(takeOffQueue, 3, landingStrips);
         toLandLessFuelAirplaneOn(landingQueue, 4, landingStrips, 3);
         
-        printf("\nPouso->\n");
+        printf("\nFilas de pouso->\n");
         showAll(landingQueue, 4, 1);
 
-        printf("\nDecolagem ->\n");
+        printf("\nFilas de decolagem->\n");
         showAll(takeOffQueue, 3, 0);
         showAllLandingStrip(landingStrips, 3);
 
