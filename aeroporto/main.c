@@ -33,7 +33,9 @@ typedef struct _landingStrip {
 } LandingStrip;
 
 int randomNumber(int start, int end);
-int calculateTimeToWaitForLanding(Queue** queues, int queueQuantity, Airplane* airplane);
+void calculateTimeToWaitForLanding(Queue** queues, int queueQuantity, Airplane* airplane);
+void calculateTimeToWaitForTakeOff(Queue** queues, int queuesQuantity, Airplane* airplane);
+int checkBetterQueue(Queue** queue, int queueQuantity);
 
 int fuelQuantity(Airplane* airplane) {
     return airplane->fuel;
@@ -66,6 +68,8 @@ Airplane* newAirplane(int fuel) {
     Airplane* airplane = malloc(sizeof(Airplane));
     airplane->fuel = fuel;
     airplane->id = randomNumber(1, 60000);
+    airplane->timeToWaitForLanding = -1;
+    airplane->timeToWaitForTakeoff = -1;
     
     return airplane;
 }
@@ -126,16 +130,24 @@ void add(Airplane* airplane, Queue* queue) {
 
 
 
-void showAll(Queue** queues, int queueQuantity) {
+void showAll(Queue** queues, int queueQuantity, int landing) {
     for(int i = 0; i < queueQuantity; i++) {
         printf("Fila %i (%i): ", i, queues[i]->size);
         for(Node* current = queues[i]->first;
             current != NULL;
             current = current->previous) {
             
-            calculateTimeToWaitForLanding(queues, queueQuantity, current->airplane);
+            if(landing)
+                calculateTimeToWaitForLanding(queues, queueQuantity, current->airplane);
+            else
+                calculateTimeToWaitForTakeOff(queues, queueQuantity, current->airplane);
             
-            printf("[id: %i, combustivel: %i, espera-pouso: %i] ", current->airplane->id, current->airplane->fuel, current->airplane->timeToWaitForLanding);
+            if(current->airplane->timeToWaitForLanding > -1) {
+                printf("[id: %i, combustivel: %i, espera-pouso: %i] ", current->airplane->id, current->airplane->fuel, current->airplane->timeToWaitForLanding);
+                
+            } else if(current->airplane->timeToWaitForLanding == -1) {
+                printf("[id: %i, combustivel: %i, espera-decolagem: %i] ", current->airplane->id, current->airplane->fuel, current->airplane->timeToWaitForTakeoff);
+            }
             
         }
         printf("\n");
@@ -170,7 +182,7 @@ LandingStrip** createLandingStrips(int quantity) {
 void createAirplanesOn(Queue** queue, int quantity, int landing, int queueQuantity) {
     
     int queueIndex = checkBetterQueue(queue, queueQuantity);
-    printf("===================================");
+    printf("=====================================================");
     printf("\n%i novo(s) aviões na fila %i\n\n", quantity, queueIndex);
     
     for(int i = 0; i < quantity; i++) {
@@ -348,14 +360,29 @@ void takeOffAirplanes(Queue** queues, int queuesQuantity, LandingStrip** landing
         airplanesToTakeOff[i] = airplaneToTakeOff;
     }
     
-    //ta entrando na 3 mesmo com o if
     for(int i = 0; i < queuesQuantity; i++) {
         landingStrips[i]->airplane = airplanesToTakeOff[i];
     }
     
 }
 
-int calculateTimeToWaitForLanding(Queue** queues, int queuesQuantity, Airplane* airplane) {
+void calculateTimeToWaitForTakeOff(Queue** queues, int queuesQuantity, Airplane* airplane) {
+    
+    int queuePosition = 0;
+
+    for(int i = 0; i < queuesQuantity; i++) {
+        for(Node* current = queues[i]->first;
+            current != NULL;
+            current = current->previous) {
+            
+            current->airplane->timeToWaitForTakeoff = queuePosition++;
+        }
+        queuePosition = 0;
+    }
+    
+}
+
+void calculateTimeToWaitForLanding(Queue** queues, int queuesQuantity, Airplane* airplane) {
     
     int airplanesQuantity = 0;
     for(int i = 0; i < queuesQuantity; i++) {
@@ -400,7 +427,7 @@ int calculateTimeToWaitForLanding(Queue** queues, int queuesQuantity, Airplane* 
             airplanes[i]->timeToWaitForLanding = i;
         }
     }
-    return 0;
+    
     
 }
 
@@ -433,10 +460,10 @@ int main() {
         toLandLessFuelAirplaneOn(landingQueue, 4, landingStrips, 3);
         
         printf("\nPouso->\n");
-        showAll(landingQueue, 4);
+        showAll(landingQueue, 4, 1);
 
         printf("\nDecolagem ->\n");
-        showAll(takeOffQueue, 3);
+        showAll(takeOffQueue, 3, 0);
         showAllLandingStrip(landingStrips, 3);
 
     }
