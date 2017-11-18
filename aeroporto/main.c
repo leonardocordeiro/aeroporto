@@ -28,6 +28,7 @@ typedef struct _queue {
 
 typedef struct _landingStrip {
     struct _airplane* airplane;
+    int landing;
     
 } LandingStrip;
 
@@ -56,6 +57,7 @@ Queue* newQueue() {
 LandingStrip* newLandingStrip() {
     LandingStrip* landingStrip = malloc(sizeof(LandingStrip));
     landingStrip->airplane = NULL;
+    landingStrip->landing = 1;
     
     return landingStrip;
 }
@@ -133,7 +135,7 @@ void showAll(Queue** queues, int queueQuantity) {
             
             calculateTimeToWaitForLanding(queues, queueQuantity, current->airplane);
             
-            printf("[id: %i, combustivel: %i, espera-decolagem: %i] ", current->airplane->id, current->airplane->fuel, current->airplane->timeToWaitForLanding);
+            printf("[id: %i, combustivel: %i, espera-pouso: %i] ", current->airplane->id, current->airplane->fuel, current->airplane->timeToWaitForLanding);
             
         }
         printf("\n");
@@ -159,6 +161,7 @@ LandingStrip** createLandingStrips(int quantity) {
     
     for(int i = 0; i < quantity; i++) {
         landingStrips[i] = newLandingStrip();
+        if(i == (quantity - 1)) landingStrips[i]->landing = 0;
     }
     
     return landingStrips;
@@ -167,10 +170,12 @@ LandingStrip** createLandingStrips(int quantity) {
 void createAirplanesOn(Queue** queue, int quantity, int landing, int queueQuantity) {
     
     int queueIndex = checkBetterQueue(queue, queueQuantity);
+    printf("===================================");
     printf("\n%i novo(s) aviões na fila %i\n\n", quantity, queueIndex);
     
     for(int i = 0; i < quantity; i++) {
-        Airplane* airplane = newAirplane(randomNumber(1, 20));
+        int fuel = landing ? randomNumber(1, 19) : 20;
+        Airplane* airplane = newAirplane(fuel);
         
         if(landing && (airplane->id % 2 != 0))
             airplane->id++;
@@ -245,6 +250,31 @@ void removeFrom(Queue* queue, Airplane* airplane) {
     }
 }
 
+Airplane* getLessFuelAirplane(Queue** queues, int queuesQuantity) {
+    int smallestFuel = 22;
+    Airplane* lessFuelAirplane = NULL;
+    Queue* queueOfLessFuelAirplane = NULL;
+    
+    for(int i = 0; i < queuesQuantity; i++) {
+        for(Node* current = queues[i]->first;
+            current != NULL;
+            current = current->previous) {
+            
+            Airplane* currentAirplane = current->airplane;
+            if(currentAirplane->fuel < smallestFuel) {
+                
+                lessFuelAirplane = currentAirplane;
+                queueOfLessFuelAirplane = queues[i];
+                smallestFuel = currentAirplane->fuel;
+            }
+            
+        }
+    }
+    
+    return lessFuelAirplane;
+    
+}
+
 Airplane* removeLessFuelAirplane(Queue** queues, int queuesQuantity) {
     int smallestFuel = 22;
     Airplane* lessFuelAirplane = NULL;
@@ -279,20 +309,48 @@ void eraseLandingStrips(LandingStrip** landingStrips, int landingStripsQuantity)
     
 }
 
-void takeOffLessFuelAirplaneOn(Queue** queues, int queuesQuantity, LandingStrip** landingStrips, int landingStripsQuantity) {
+void toLandLessFuelAirplaneOn(Queue** queues, int queuesQuantity, LandingStrip** landingStrips, int landingStripsQuantity) {
     
     Airplane* lessFuelAirplane = removeLessFuelAirplane(queues, queuesQuantity);
     int i = 0;
     for(i = 0; i < landingStripsQuantity; i++) {
         Airplane* currentAirplane = landingStrips[i]->airplane;
         if(currentAirplane == NULL) {
-            landingStrips[i]->airplane = lessFuelAirplane;
+            if(landingStrips[i]->landing == 1)
+                landingStrips[i]->airplane = lessFuelAirplane;
             return;
         }
     }
     
     if(i == landingStripsQuantity) {
         eraseLandingStrips(landingStrips, landingStripsQuantity);
+    }
+    
+}
+
+// strip quantity == queues quantity!!!
+void takeOffAirplanes(Queue** queues, int queuesQuantity, LandingStrip** landingStrips) {
+
+    Airplane** airplanesToTakeOff = malloc(queuesQuantity * sizeof(Airplane*));
+    
+    for(int i = 0; i < queuesQuantity; i++) {
+        for(Node* current = queues[i]->first;
+            current != NULL;
+            current = current->previous) {
+            
+            Airplane* lessFuelAirplane = getLessFuelAirplane(queues, queuesQuantity);
+            if(lessFuelAirplane->fuel <= 1) {
+                return;
+            }
+        }
+        
+        Airplane* airplaneToTakeOff = pop(queues[i]);
+        airplanesToTakeOff[i] = airplaneToTakeOff;
+    }
+    
+    //ta entrando na 3 mesmo com o if
+    for(int i = 0; i < queuesQuantity; i++) {
+        landingStrips[i]->airplane = airplanesToTakeOff[i];
     }
     
 }
@@ -360,7 +418,7 @@ int main() {
     Queue** landingQueue = createQueues(4);
     Queue** takeOffQueue = createQueues(3);
     
-    LandingStrip** landingStrips = createLandingStrips(2);
+    LandingStrip** landingStrips = createLandingStrips(3);
     
     for(int time = 0;; time++) {
         waitCommand();
@@ -369,15 +427,18 @@ int main() {
         int airplaneTakeOffNumber = randomNumber(0, 3);
 
         createAirplanesOn(landingQueue, airplaneLandingNumber, 1, 4);
-
-        takeOffLessFuelAirplaneOn(landingQueue, 4, landingStrips, 2);
+        createAirplanesOn(takeOffQueue, airplaneTakeOffNumber, 0, 3);
         
+        takeOffAirplanes(takeOffQueue, 3, landingStrips);
+        toLandLessFuelAirplaneOn(landingQueue, 4, landingStrips, 3);
         
-        
+        printf("\nPouso->\n");
         showAll(landingQueue, 4);
-        showAllLandingStrip(landingStrips, 2);
+
+        printf("\nDecolagem ->\n");
+        showAll(takeOffQueue, 3);
+        showAllLandingStrip(landingStrips, 3);
 
     }
-    
     return 0;
 }
