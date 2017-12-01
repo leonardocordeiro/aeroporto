@@ -26,11 +26,11 @@ typedef struct _queue {
     struct _node* first;
 } Queue;
 
-typedef struct _landingStrip {
+typedef struct _strip {
     struct _airplane* airplane;
     int landing;
     
-} LandingStrip;
+} Strip;
 
 int randomNumber(int start, int end);
 void calculateTimeToWaitForLanding(Queue** queues, int queueQuantity, Airplane* airplane);
@@ -56,8 +56,8 @@ Queue* newQueue() {
     return queue;
 }
 
-LandingStrip* newLandingStrip() {
-    LandingStrip* landingStrip = malloc(sizeof(LandingStrip));
+Strip* newLandingStrip() {
+    Strip* landingStrip = malloc(sizeof(Strip));
     landingStrip->airplane = NULL;
     landingStrip->landing = 1;
     
@@ -168,8 +168,8 @@ Queue** createQueues(int quantity) {
     return queues;
 }
 
-LandingStrip** createLandingStrips(int quantity) {
-    LandingStrip** landingStrips = malloc(quantity * sizeof(LandingStrip*));
+Strip** createLandingStrips(int quantity) {
+    Strip** landingStrips = malloc(quantity * sizeof(Strip*));
     
     for(int i = 0; i < quantity; i++) {
         landingStrips[i] = newLandingStrip();
@@ -313,7 +313,7 @@ Airplane* removeLessFuelAirplane(Queue** queues, int queuesQuantity) {
     
 }
 
-void eraseLandingStrips(LandingStrip** landingStrips, int landingStripsQuantity) {
+void eraseLandingStrips(Strip** landingStrips, int landingStripsQuantity) {
     
     for(int i = 0; i < landingStripsQuantity; i++) {
         landingStrips[i]->airplane = NULL;
@@ -321,7 +321,7 @@ void eraseLandingStrips(LandingStrip** landingStrips, int landingStripsQuantity)
     
 }
 
-void toLandLessFuelAirplaneOn(Queue** queues, int queuesQuantity, LandingStrip** landingStrips, int landingStripsQuantity) {
+void toLandLessFuelAirplaneOn(Queue** queues, int queuesQuantity, Strip** landingStrips, int landingStripsQuantity) {
     
     Airplane* lessFuelAirplane = removeLessFuelAirplane(queues, queuesQuantity);
     int i = 0;
@@ -341,7 +341,7 @@ void toLandLessFuelAirplaneOn(Queue** queues, int queuesQuantity, LandingStrip**
 }
 
 // strip quantity == queues quantity!!!
-void takeOffAirplanes(Queue** queues, int queuesQuantity, LandingStrip** landingStrips) {
+void takeOffAirplanes(Queue** queues, int queuesQuantity, Strip** landingStrips) {
 
     Airplane** airplanesToTakeOff = malloc(queuesQuantity * sizeof(Airplane*));
     
@@ -431,7 +431,7 @@ void calculateTimeToWaitForLanding(Queue** queues, int queuesQuantity, Airplane*
     
 }
 
-void showAllLandingStrip(LandingStrip** landingStrip, int landingStripQuantity) {
+void showAllLandingStrip(Strip** landingStrip, int landingStripQuantity) {
     
     for(int i = 0; i < landingStripQuantity; i++) {
         printf("\nPista %i: ", (i + 1));
@@ -451,7 +451,7 @@ int main() {
     Queue** landingQueue = createQueues(4);
     Queue** takeOffQueue = createQueues(3);
     
-    LandingStrip** landingStrips = createLandingStrips(3);
+    Strip** landingStrips = createLandingStrips(3);
     
     for(int time = 0;; time++) {
         waitCommand();
